@@ -11,73 +11,92 @@ const app = express();
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-// Allow frontend to access the API
-app.use(cors({ origin: 'health-and-fitness-blog.vercel.app' }));
+app.use(cors({ origin: 'http://localhost:5173',
+    
+})); 
 
 // Database Connection
 connectDb();
 
 // Routes for User
-app.post('/create-account', async (req, res) => {
-    console.log("Server");
-    const { fullName, email, password } = req.body;
+app.post('/create-account', async (req,res) => {
+    console.log("Server")
+    const {fullName,email,password} = req.body;
 
-    if (!fullName) {
-        return res.status(400).json({ error: true, message: "Full Name is required" });
-    }
-    if (!email) {
-        return res.status(400).json({ error: true, message: "Email is required" });
-    }
-    if (!password) {
-        return res.status(400).json({ error: true, message: "Password is required" });
+    if(!fullName)
+    {
+        return res.status(400).json({error : true, message : "Full Name is required"})
     }
 
-    const isUser = await User.findOne({ email });
-
-    if (isUser) {
-        return res.json({ error: true, message: "User already exists" });
+    if(!email)
+    {
+        return res.status(400).json({error : true, message : "Email is required"})
     }
 
-    const user = new User({ fullName, email, password });
+    if(!password)
+    {
+        return res.status(400).json({error : true, message : "Password is required"})
+    }
+
+    const isUser = await User.findOne({email : email})
+
+    if(isUser)
+    {
+        return res.json({error : true , message : "User already exist"})
+    }
+
+    const user = new User({
+        fullName,
+        email,
+        password
+    })
+
     await user.save();
 
     return res.json({
-        error: false,
+        error:false,
         user,
-        message: "Registration Successful",
-    });
-});
+        message : "Registration Successful",
+    })
+})
 
-app.post('/login', async (req, res) => {
-    console.log("server-side");
-    const { email, password } = req.body;
+app.post('/login', async (req,res) => {
+    const {email,password} = req.body;
+    console.log("server-side")
+        if(!email)
+        {
+            return res.status(400).json({ message : "Email is required"});
+        }
+        
+        if(!password)
+        {
+            return res.status(400).json({ message : "Password is required"});
+        }
 
-    if (!email) {
-        return res.status(400).json({ message: "Email is required" });
-    }
-    if (!password) {
-        return res.status(400).json({ message: "Password is required" });
-    }
+        const userInfo = await User.findOne({email : email});
 
-    const userInfo = await User.findOne({ email });
+        if(!userInfo)
+        {
+            return res.status(400).json({message: "User not found"});
+        }
 
-    if (!userInfo) {
-        return res.status(400).json({ message: "User not found" });
-    }
-
-    if (userInfo.email === email && userInfo.password === password) {
-        return res.json({
-            error: false,
-            message: "Login Successful",
-            email,
-        });
-    } else {
-        return res.status(400).json({
-            error: true,
-            message: "Invalid Credentials",
-        });
-    }
-});
+        if(userInfo.email == email && userInfo.password == password)
+            {
+                return res.json({
+                    error: false,
+                    message : "Login Successful",
+                    email,
+                });
+            }
+        
+            else
+            {
+                return res.status(400).json({
+                    error:true,
+                    message:"Invalid Credentials",
+                });
+            }
+})
 
 // Routes for Blogs
 app.get('/', async (req, res) => {
@@ -91,7 +110,6 @@ app.get('/', async (req, res) => {
 
 app.post('/add', async (req, res) => {
     const { title, description, imageURL } = req.body;
-
     if (!title || !description || !imageURL) {
         return res.status(400).json({ error: 'Title, description, and imageURL are required' });
     }
@@ -105,6 +123,7 @@ app.post('/add', async (req, res) => {
     }
 });
 
+
 app.get('/:id', async (req, res) => {
     try {
         const blog = await itemModel.findById(req.params.id);
@@ -116,6 +135,8 @@ app.get('/:id', async (req, res) => {
         return res.status(500).json({ error: 'Error fetching blog post' });
     }
 });
+
+
 
 app.delete('/:id', async (req, res) => {
     try {
@@ -129,7 +150,6 @@ app.delete('/:id', async (req, res) => {
     }
 });
 
-// Server Configuration
 const PORT = process.env.PORT || 3333;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
